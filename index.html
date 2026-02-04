@@ -9,7 +9,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBV3cEHIGsVyCSeNy1eo4ZBj7vhL0f0nHA",
@@ -22,19 +21,13 @@
             measurementId: "G-739Q6G63Z1"
         };
 
-        // Инициализация
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const db = getDatabase(app);
-
-        // Делаем функции доступными для глобального вызова из HTML
-        window.db = db;
-        window.dbRef = ref;
-        window.dbSet = set;
-        window.dbPush = push;
-        window.dbOnValue = onValue;
-        window.dbGet = get;
-        window.dbChild = child;
+        window.db = getDatabase(app);
+        window.fRef = ref;
+        window.fSet = set;
+        window.fPush = push;
+        window.fOnValue = onValue;
+        window.fGet = get;
     </script>
 
     <style>
@@ -68,16 +61,15 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-primary); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s, color 0.3s; }
 
-        /* Экраны */
         #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e1e1e, #000); display: flex; justify-content: center; align-items: center; z-index: 5000; }
         .auth-box { background: var(--bg-secondary); padding: 30px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .auth-box h1 { margin-bottom: 20px; color: var(--accent); }
         .auth-input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: var(--bg-tertiary); color: var(--text-main); font-size: 16px; outline: none; }
         .btn-primary { width: 100%; padding: 14px; margin-top: 15px; border-radius: 10px; border: none; background: var(--accent); color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary:active { transform: scale(0.98); }
         .btn-text { background: transparent; color: var(--text-muted); margin-top: 10px; cursor: pointer; border:none; font-size: 14px; }
         .hidden { display: none !important; }
 
-        /* Интерфейс */
         #app-screen { display: flex; width: 100%; height: 100%; position: relative; }
         .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--bg-secondary); z-index: 2000; transform: translateX(-100%); transition: transform 0.3s ease; box-shadow: 2px 0 10px var(--shadow); display: flex; flex-direction: column; }
         .sidebar.active { transform: translateX(0); }
@@ -85,7 +77,9 @@
         .sidebar-header img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
         .sidebar-menu { padding: 10px; flex: 1; overflow-y: auto; }
         .menu-item { padding: 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 16px; color: var(--text-main); }
+        .menu-item:hover, .menu-item:active { background: rgba(255,255,255,0.05); }
         .menu-item i { width: 25px; color: var(--text-muted); }
+        .menu-footer { padding: 20px; font-size: 12px; color: var(--text-muted); text-align: center; }
 
         .chat-list-panel { width: 350px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.05); background: var(--bg-primary); }
         .panel-header { padding: 15px; display: flex; align-items: center; gap: 15px; height: 60px; }
@@ -93,29 +87,36 @@
         .search-bar { flex: 1; background: var(--bg-secondary); border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; margin-left: 10px; }
         .scroll-list { flex: 1; overflow-y: auto; }
-        .chat-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .chat-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+        .chat-item:active { background: var(--bg-secondary); }
         .chat-item img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
         .chat-info { flex: 1; min-width: 0; }
+        .chat-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .chat-name { font-weight: 600; font-size: 16px; }
+        .chat-time { font-size: 12px; color: var(--text-muted); }
         .chat-msg { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .verified-badge { color: var(--accent); margin-left: 5px; font-size: 14px; }
 
         .chat-room-panel { flex: 1; display: flex; flex-direction: column; background: #000; background-image: url('https://w.forfun.com/fetch/50/5081f28733ce693ce6919df967d643d9.jpeg'); background-size: cover; position: relative; }
         .chat-overlay { position: absolute; inset: 0; background: var(--bg-primary); opacity: 0.85; z-index: 0; }
-        .chat-navbar { height: 60px; background: var(--bg-secondary); padding: 0 15px; display: flex; align-items: center; gap: 10px; z-index: 2; }
-        .chat-navbar img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .chat-navbar { height: 60px; background: var(--bg-secondary); padding: 0 15px; display: flex; align-items: center; gap: 10px; z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .back-btn { display: none; font-size: 20px; padding: 10px; cursor: pointer; color: var(--text-main); }
+        .chat-navbar img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .messages-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 2; }
-        .msg { max-width: 75%; padding: 10px 14px; border-radius: 16px; position: relative; word-wrap: break-word; font-size: 15px; }
+        .msg { max-width: 75%; padding: 10px 14px; border-radius: 16px; position: relative; word-wrap: break-word; font-size: 15px; animation: popIn 0.2s ease; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .msg.in { background: var(--bg-secondary); border-bottom-left-radius: 4px; align-self: flex-start; }
         .msg.out { background: var(--msg-out); color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
-
+        
         .input-box { background: var(--bg-secondary); padding: 10px; display: flex; align-items: center; gap: 10px; z-index: 2; }
-        .input-box input { flex: 1; background: var(--bg-primary); border: none; padding: 12px; border-radius: 20px; color: var(--text-main); outline: none; }
-        .action-btn { font-size: 22px; color: var(--text-muted); cursor: pointer; }
+        .input-box input { flex: 1; background: var(--bg-primary); border: none; padding: 12px; border-radius: 20px; color: var(--text-main); outline: none; font-size: 16px; }
+        .action-btn { font-size: 22px; color: var(--text-muted); padding: 5px; cursor: pointer; }
         .send-btn { color: var(--accent); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; justify-content: center; align-items: center; }
         .modal { background: var(--bg-secondary); width: 90%; max-width: 400px; border-radius: 15px; padding: 20px; position: relative; }
+        .close-modal { position: absolute; right: 15px; top: 15px; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        .modal h2 { margin-top: 0; font-size: 20px; }
 
         @media (max-width: 768px) {
             .chat-list-panel { width: 100%; }
@@ -171,7 +172,7 @@
             </div>
             <div class="menu-footer">
                 <div class="menu-item" style="color: var(--danger);" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Выйти</div>
-                <br>blikins v1.2 Firebase
+                <br>blikins v1.0 Mobile
             </div>
         </div>
 
@@ -180,7 +181,7 @@
                 <i class="fas fa-bars burger-btn" onclick="openSidebar()"></i>
                 <div class="search-bar">
                     <i class="fas fa-search" style="color:gray;"></i>
-                    <input type="text" placeholder="Поиск (введите логин)" onchange="findAndAddUser(this.value)">
+                    <input type="text" placeholder="Поиск" oninput="searchUser(this.value)">
                 </div>
             </div>
             <div class="scroll-list" id="chat-list-container"></div>
@@ -195,11 +196,14 @@
                     <div id="room-name" style="font-weight:bold; font-size:16px;">Name</div>
                     <div id="room-status" style="font-size:12px; color:gray;">в сети</div>
                 </div>
+                <i class="fas fa-ellipsis-v action-btn" style="font-size:18px;"></i>
             </div>
             <div class="messages-container" id="messages-area"></div>
             <div class="input-box">
                 <i class="fas fa-paperclip action-btn"></i>
-                <input type="text" id="msg-input" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <input type="text" id="msg-input" placeholder="Сообщение...">
+                <i class="fas fa-microphone action-btn"></i>
+                <i class="fas fa-camera action-btn"></i>
                 <i class="fas fa-paper-plane action-btn send-btn" onclick="sendMessage()"></i>
             </div>
         </div>
@@ -209,8 +213,9 @@
         <div class="modal">
             <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
             <h2>Мой профиль</h2>
-            <input type="text" id="edit-name" class="auth-input" placeholder="Имя">
-            <input type="text" id="edit-avatar" class="auth-input" placeholder="URL Аватара">
+            <input type="text" id="edit-name" class="auth-input">
+            <input type="text" id="edit-avatar" class="auth-input">
+            <input type="text" id="edit-bio" class="auth-input">
             <button class="btn-primary" onclick="saveProfile()">Сохранить</button>
         </div>
     </div>
@@ -218,11 +223,10 @@
     <script>
         const SECRET_CODE = "3729049";
         const ADMIN_CODE = "#$*@(RUEIRFWFJSOEIFOSFJF";
-        
         let currentUser = null;
         let activeChatId = null;
+        let chats = [{ id: 'bot', name: 'blikins support', login: 'support', avatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png', verified: true, messages: [] }];
 
-        // --- ЛОГИКА АВТОРИЗАЦИИ (FIREBASE) ---
         function showAuthForm(type) {
             document.getElementById('auth-choice').classList.add('hidden');
             document.getElementById('auth-login').classList.add('hidden');
@@ -233,151 +237,95 @@
         }
 
         async function doRegister() {
-            const login = document.getElementById('reg-user').value.toLowerCase().trim();
+            const login = document.getElementById('reg-user').value.trim().toLowerCase();
             const pass = document.getElementById('reg-pass').value;
             const code = document.getElementById('reg-secret').value;
-
             if(!login || !pass) return alert("Заполни поля");
-            if(code !== SECRET_CODE && code !== ADMIN_CODE) return alert("Неверный секретный код");
+            if(code !== SECRET_CODE && code !== ADMIN_CODE) return alert("Неверный код");
+            
+            const userSnap = await window.fGet(window.fRef(window.db, 'users/' + login));
+            if(userSnap.exists()) return alert("Логин занят");
 
-            const snapshot = await window.dbGet(window.dbChild(window.dbRef(window.db), 'users/' + login));
-            if(snapshot.exists()) return alert("Логин занят");
-
-            currentUser = {
-                login: login,
-                pass: pass,
-                name: login,
-                avatar: 'https://via.placeholder.com/100',
-                isAdmin: (code === ADMIN_CODE),
-                chats: ['support_bot'] // Начальный чат
-            };
-
-            await window.dbSet(window.dbRef(window.db, 'users/' + login), currentUser);
+            currentUser = { login, pass, name: login, avatar: 'https://via.placeholder.com/100', isAdmin: (code === ADMIN_CODE), bio: '' };
+            await window.fSet(window.fRef(window.db, 'users/' + login), currentUser);
             localStorage.setItem('blikins_user', JSON.stringify(currentUser));
             startApp();
         }
 
         async function doLogin() {
-            const login = document.getElementById('login-user').value.toLowerCase().trim();
+            const login = document.getElementById('login-user').value.trim().toLowerCase();
             const pass = document.getElementById('login-pass').value;
-
-            const snapshot = await window.dbGet(window.dbChild(window.dbRef(window.db), 'users/' + login));
-            if(snapshot.exists() && snapshot.val().pass === pass) {
-                currentUser = snapshot.val();
+            const userSnap = await window.fGet(window.fRef(window.db, 'users/' + login));
+            if(userSnap.exists() && userSnap.val().pass === pass) {
+                currentUser = userSnap.val();
                 localStorage.setItem('blikins_user', JSON.stringify(currentUser));
                 startApp();
-            } else {
-                alert("Неверный логин или пароль");
-            }
+            } else alert("Ошибка входа");
         }
 
         function startApp() {
-            if(!currentUser) return;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
             document.getElementById('menu-avatar').src = currentUser.avatar;
             document.getElementById('menu-name').innerText = currentUser.name;
             document.getElementById('menu-login').innerText = '@' + currentUser.login;
-            
             if(currentUser.isAdmin) document.getElementById('btn-admin-panel').style.display = 'flex';
-            
-            loadChats();
+            renderChatList();
         }
 
-        // --- ЛОГИКА ЧАТОВ (FIREBASE) ---
-        function loadChats() {
+        function renderChatList() {
             const container = document.getElementById('chat-list-container');
-            // Слушаем список чатов пользователя
-            window.dbOnValue(window.dbRef(window.db, 'users/' + currentUser.login + '/chats'), async (snapshot) => {
-                container.innerHTML = '';
-                const chatIds = snapshot.val() || [];
-                for(let id of chatIds) {
-                    if(id === 'support_bot') {
-                        renderChatItem({id: 'support_bot', name: 'Support', avatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png'});
-                    } else {
-                        const userSnap = await window.dbGet(window.dbRef(window.db, 'users/' + id));
-                        if(userSnap.exists()) renderChatItem(userSnap.val());
-                    }
-                }
+            container.innerHTML = '';
+            chats.forEach(chat => {
+                let el = document.createElement('div');
+                el.className = 'chat-item';
+                el.onclick = () => openChat(chat.id);
+                el.innerHTML = `<img src="${chat.avatar}"><div class="chat-info"><div class="chat-top"><span class="chat-name">${chat.name}</span></div><div class="chat-msg">Открыть чат</div></div>`;
+                container.appendChild(el);
             });
-        }
-
-        function renderChatItem(data) {
-            const container = document.getElementById('chat-list-container');
-            const div = document.createElement('div');
-            div.className = 'chat-item';
-            div.onclick = () => openChat(data.login || data.id);
-            div.innerHTML = `<img src="${data.avatar}"><div class="chat-info"><div class="chat-name">${data.name}</div><div class="chat-msg">Нажми, чтобы открыть</div></div>`;
-            container.appendChild(div);
-        }
-
-        async function findAndAddUser(login) {
-            login = login.toLowerCase().trim();
-            if(login === currentUser.login) return;
-            const snap = await window.dbGet(window.dbRef(window.db, 'users/' + login));
-            if(snap.exists()) {
-                let myChats = currentUser.chats || [];
-                if(!myChats.includes(login)) {
-                    myChats.push(login);
-                    await window.dbSet(window.dbRef(window.db, 'users/' + currentUser.login + '/chats'), myChats);
-                    currentUser.chats = myChats;
-                }
-                openChat(login);
-            } else {
-                alert("Пользователь не найден");
-            }
         }
 
         function openChat(chatId) {
             activeChatId = chatId;
+            const chat = chats.find(c => c.id === chatId);
+            document.getElementById('room-name').innerText = chat.name;
+            document.getElementById('room-avatar').src = chat.avatar;
             document.getElementById('chat-room').classList.add('open');
             
-            // Определяем ID комнаты (всегда в алфавитном порядке для 1 на 1)
-            const roomId = [currentUser.login, chatId].sort().join('_');
-            
-            // Слушаем сообщения в реальном времени
-            window.dbOnValue(window.dbRef(window.db, 'messages/' + roomId), (snapshot) => {
-                const container = document.getElementById('messages-area');
-                container.innerHTML = '';
-                const msgs = snapshot.val();
-                if(msgs) {
-                    Object.values(msgs).forEach(m => {
-                        const el = document.createElement('div');
+            // Real-time messages
+            window.fOnValue(window.fRef(window.db, 'messages/' + chatId), (snap) => {
+                const area = document.getElementById('messages-area');
+                area.innerHTML = '';
+                if(snap.exists()) {
+                    Object.values(snap.val()).forEach(m => {
+                        let el = document.createElement('div');
                         el.className = 'msg ' + (m.sender === currentUser.login ? 'out' : 'in');
                         el.innerText = m.text;
-                        container.appendChild(el);
+                        area.appendChild(el);
                     });
                 }
-                container.scrollTop = container.scrollHeight;
+                area.scrollTop = area.scrollHeight;
             });
         }
 
-        async function sendMessage() {
+        function sendMessage() {
             const input = document.getElementById('msg-input');
-            const text = input.value.trim();
-            if(!text || !activeChatId) return;
-
-            const roomId = [currentUser.login, activeChatId].sort().join('_');
-            const newMsgRef = window.dbPush(window.dbRef(window.db, 'messages/' + roomId));
-            await window.dbSet(newMsgRef, {
-                text: text,
-                sender: currentUser.login,
-                time: Date.now()
-            });
+            if(!input.value.trim() || !activeChatId) return;
+            const msgRef = window.fPush(window.fRef(window.db, 'messages/' + activeChatId));
+            window.fSet(msgRef, { text: input.value, sender: currentUser.login, time: Date.now() });
             input.value = '';
         }
 
-        // --- UI UTILS ---
         function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('menu-overlay').style.display = 'block'; }
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('menu-overlay').style.display = 'none'; }
         function openModal(id) { closeSidebar(); document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function closeChat() { document.getElementById('chat-room').classList.remove('open'); activeChatId = null; }
-        function doLogout() { localStorage.clear(); location.reload(); }
+        function closeChat() { document.getElementById('chat-room').classList.remove('open'); }
+        function doLogout() { localStorage.removeItem('blikins_user'); location.reload(); }
 
         window.onload = () => {
-            const saved = localStorage.getItem('blikins_user');
-            if(saved) { currentUser = JSON.parse(saved); startApp(); }
+            const stored = localStorage.getItem('blikins_user');
+            if(stored) { currentUser = JSON.parse(stored); startApp(); }
         }
     </script>
 </body>
