@@ -189,8 +189,7 @@
             <h2>Регистрация</h2>
             <input type="text" id="reg-user" class="auth-input" placeholder="Придумайте логин">
             <input type="password" id="reg-pass" class="auth-input" placeholder="Пароль">
-            <input type="number" id="reg-secret" class="auth-input" placeholder="Секретный код (37...)">
-            <input type="text" id="reg-admin" class="auth-input" placeholder="Код админа (необязательно)">
+            <input type="text" id="reg-secret" class="auth-input" placeholder="Секретный код или Код Админа">
             <button class="btn-primary" onclick="doRegister()">Создать аккаунт</button>
             <button class="btn-text" onclick="showAuthForm('choice')">Назад</button>
         </div>
@@ -352,18 +351,27 @@
         function doRegister() {
             const login = document.getElementById('reg-user').value;
             const pass = document.getElementById('reg-pass').value;
-            const secret = document.getElementById('reg-secret').value;
-            const adminCode = document.getElementById('reg-admin').value;
+            const codeInput = document.getElementById('reg-secret').value;
 
             if(!login || !pass) return alert("Заполните поля");
-            if(secret !== SECRET_CODE) return alert("Неверный секретный код! Регистрация закрыта.");
+            
+            let isAdmin = false;
+
+            // Проверка кода
+            if (codeInput === SECRET_CODE) {
+                isAdmin = false;
+            } else if (codeInput === ADMIN_CODE) {
+                isAdmin = true;
+            } else {
+                return alert("Неверный секретный код! Регистрация невозможна.");
+            }
 
             currentUser = {
                 login: login,
                 pass: pass,
                 name: login,
                 avatar: 'https://via.placeholder.com/100',
-                isAdmin: (adminCode === ADMIN_CODE),
+                isAdmin: isAdmin,
                 bio: ''
             };
             
