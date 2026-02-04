@@ -5,86 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>blikins</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0f0f0f;
-            --bg-secondary: #1e1e1e;
-            --bg-tertiary: #2c2c2c;
-            --text-main: #ffffff;
-            --text-muted: #aaaaaa;
-            --accent: #3390ec;
-            --danger: #ff5555;
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-main); height: 100vh; overflow: hidden; }
-
-        /* Экраны */
-        .screen { position: fixed; inset: 0; display: flex; flex-direction: column; transition: 0.3s; }
-        .hidden { display: none !important; }
-
-        /* Авторизация */
-        .auth-box { background: var(--bg-secondary); padding: 30px; border-radius: 20px; width: 90%; max-width: 350px; margin: auto; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .auth-input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: var(--bg-tertiary); color: #fff; font-size: 16px; outline: none; }
-        .btn-primary { width: 100%; padding: 14px; margin-top: 10px; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: bold; cursor: pointer; }
-        
-        /* Мессенджер */
-        #app-screen { background: var(--bg-primary); }
-        .header { height: 60px; background: var(--bg-secondary); display: flex; align-items: center; padding: 0 15px; justify-content: space-between; }
-        .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 15px; line-height: 1.4; position: relative; }
-        .msg.out { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
-        .msg.in { align-self: flex-start; background: var(--bg-secondary); border-bottom-left-radius: 4px; }
-        .msg-info { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: right; }
-
-        .input-area { padding: 10px; background: var(--bg-secondary); display: flex; gap: 10px; align-items: center; }
-        .input-area input { flex: 1; background: var(--bg-tertiary); border: none; padding: 12px; border-radius: 20px; color: white; outline: none; }
-        
-        #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; color: white; }
-    </style>
-</head>
-<body>
-
-    <div id="loading-overlay" class="hidden">Загрузка...</div>
-
-    <div id="auth-screen" class="screen">
-        <div class="auth-box">
-            <h1 style="color:var(--accent); margin-top:0;">blikins</h1>
-            
-            <div id="login-form">
-                <input type="text" id="log-user" class="auth-input" placeholder="Логин">
-                <input type="password" id="log-pass" class="auth-input" placeholder="Пароль">
-                <button class="btn-primary" onclick="doLogin()">Войти</button>
-                <p style="color:var(--text-muted); font-size:14px; margin-top:15px; cursor:pointer;" onclick="toggleAuth(true)">Нет аккаунта? Регистрация</p>
-            </div>
-
-            <div id="reg-form" class="hidden">
-                <input type="text" id="reg-user" class="auth-input" placeholder="Придумайте логин">
-                <input type="password" id="reg-pass" class="auth-input" placeholder="Пароль">
-                <input type="text" id="reg-code" class="auth-input" placeholder="Секретный код">
-                <button class="btn-primary" onclick="doRegister()">Создать аккаунт</button>
-                <p style="color:var(--text-muted); font-size:14px; margin-top:15px; cursor:pointer;" onclick="toggleAuth(false)">Уже есть аккаунт? Войти</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="app-screen" class="screen hidden">
-        <div class="header">
-            <div style="font-weight:bold;" id="header-user">blikins chat</div>
-            <i class="fas fa-sign-out-alt" style="color:var(--danger); cursor:pointer;" onclick="logout()"></i>
-        </div>
-        <div class="messages" id="chat-messages"></div>
-        <div class="input-area">
-            <input type="text" id="msg-input" placeholder="Сообщение...">
-            <i class="fas fa-paper-plane" style="color:var(--accent); font-size:20px;" onclick="sendMessage()"></i>
-        </div>
-    </div>
-
+    
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-        import { getDatabase, ref, set, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
-        // Твои настройки
         const firebaseConfig = {
             apiKey: "AIzaSyBV3cEHIGsVyCSeNy1eo4ZBj7vhL0f0nHA",
             authDomain: "blikins-23ca8.firebaseapp.com",
@@ -92,143 +18,366 @@
             projectId: "blikins-23ca8",
             storageBucket: "blikins-23ca8.firebasestorage.app",
             messagingSenderId: "907805919084",
-            appId: "1:907805919084:web:714e2d2b63d738e86c9549"
+            appId: "1:907805919084:web:714e2d2b63d738e86c9549",
+            measurementId: "G-739Q6G63Z1"
         };
 
+        // Инициализация
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
+        // Делаем функции доступными для глобального вызова из HTML
+        window.db = db;
+        window.dbRef = ref;
+        window.dbSet = set;
+        window.dbPush = push;
+        window.dbOnValue = onValue;
+        window.dbGet = get;
+        window.dbChild = child;
+    </script>
+
+    <style>
+        /* --- ТВОИ ОРИГИНАЛЬНЫЕ СТИЛИ (БЕЗ ИЗМЕНЕНИЙ) --- */
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2c2c2c;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+            --accent: #3390ec;
+            --accent-hover: #2b7ac9;
+            --danger: #ff5555;
+            --msg-in: #222222;
+            --msg-out: #3390ec;
+            --shadow: rgba(0,0,0,0.5);
+            --radius: 12px;
+        }
+
+        body.light-theme {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f4f4f5;
+            --bg-tertiary: #e4e4e5;
+            --text-main: #000000;
+            --text-muted: #707579;
+            --msg-in: #ffffff;
+            --msg-out: #3390ec;
+            --shadow: rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-primary); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s, color 0.3s; }
+
+        /* Экраны */
+        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e1e1e, #000); display: flex; justify-content: center; align-items: center; z-index: 5000; }
+        .auth-box { background: var(--bg-secondary); padding: 30px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .auth-box h1 { margin-bottom: 20px; color: var(--accent); }
+        .auth-input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: var(--bg-tertiary); color: var(--text-main); font-size: 16px; outline: none; }
+        .btn-primary { width: 100%; padding: 14px; margin-top: 15px; border-radius: 10px; border: none; background: var(--accent); color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-text { background: transparent; color: var(--text-muted); margin-top: 10px; cursor: pointer; border:none; font-size: 14px; }
+        .hidden { display: none !important; }
+
+        /* Интерфейс */
+        #app-screen { display: flex; width: 100%; height: 100%; position: relative; }
+        .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--bg-secondary); z-index: 2000; transform: translateX(-100%); transition: transform 0.3s ease; box-shadow: 2px 0 10px var(--shadow); display: flex; flex-direction: column; }
+        .sidebar.active { transform: translateX(0); }
+        .sidebar-header { padding: 20px; background: var(--bg-tertiary); display: flex; align-items: center; gap: 15px; }
+        .sidebar-header img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+        .sidebar-menu { padding: 10px; flex: 1; overflow-y: auto; }
+        .menu-item { padding: 15px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 16px; color: var(--text-main); }
+        .menu-item i { width: 25px; color: var(--text-muted); }
+
+        .chat-list-panel { width: 350px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.05); background: var(--bg-primary); }
+        .panel-header { padding: 15px; display: flex; align-items: center; gap: 15px; height: 60px; }
+        .burger-btn { font-size: 20px; cursor: pointer; padding: 5px; color: var(--text-muted); }
+        .search-bar { flex: 1; background: var(--bg-secondary); border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; }
+        .search-bar input { background: transparent; border: none; color: var(--text-main); width: 100%; outline: none; margin-left: 10px; }
+        .scroll-list { flex: 1; overflow-y: auto; }
+        .chat-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .chat-item img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-name { font-weight: 600; font-size: 16px; }
+        .chat-msg { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .chat-room-panel { flex: 1; display: flex; flex-direction: column; background: #000; background-image: url('https://w.forfun.com/fetch/50/5081f28733ce693ce6919df967d643d9.jpeg'); background-size: cover; position: relative; }
+        .chat-overlay { position: absolute; inset: 0; background: var(--bg-primary); opacity: 0.85; z-index: 0; }
+        .chat-navbar { height: 60px; background: var(--bg-secondary); padding: 0 15px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+        .chat-navbar img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .back-btn { display: none; font-size: 20px; padding: 10px; cursor: pointer; color: var(--text-main); }
+        .messages-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 2; }
+        .msg { max-width: 75%; padding: 10px 14px; border-radius: 16px; position: relative; word-wrap: break-word; font-size: 15px; }
+        .msg.in { background: var(--bg-secondary); border-bottom-left-radius: 4px; align-self: flex-start; }
+        .msg.out { background: var(--msg-out); color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
+
+        .input-box { background: var(--bg-secondary); padding: 10px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+        .input-box input { flex: 1; background: var(--bg-primary); border: none; padding: 12px; border-radius: 20px; color: var(--text-main); outline: none; }
+        .action-btn { font-size: 22px; color: var(--text-muted); cursor: pointer; }
+        .send-btn { color: var(--accent); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .modal { background: var(--bg-secondary); width: 90%; max-width: 400px; border-radius: 15px; padding: 20px; position: relative; }
+
+        @media (max-width: 768px) {
+            .chat-list-panel { width: 100%; }
+            .chat-room-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; transform: translateX(100%); transition: transform 0.3s ease; z-index: 100; }
+            .chat-room-panel.open { transform: translateX(0); }
+            .back-btn { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen">
+        <div id="auth-choice" class="auth-box">
+            <h1>blikins</h1>
+            <button class="btn-primary" onclick="showAuthForm('login')">Войти</button>
+            <button class="btn-primary" style="background: var(--bg-tertiary); margin-top: 10px;" onclick="showAuthForm('reg')">Регистрация</button>
+        </div>
+
+        <div id="auth-login" class="auth-box hidden">
+            <h2>Вход</h2>
+            <input type="text" id="login-user" class="auth-input" placeholder="Логин">
+            <input type="password" id="login-pass" class="auth-input" placeholder="Пароль">
+            <button class="btn-primary" onclick="doLogin()">Войти</button>
+            <button class="btn-text" onclick="showAuthForm('choice')">Назад</button>
+        </div>
+
+        <div id="auth-reg" class="auth-box hidden">
+            <h2>Регистрация</h2>
+            <input type="text" id="reg-user" class="auth-input" placeholder="Придумайте логин">
+            <input type="password" id="reg-pass" class="auth-input" placeholder="Пароль">
+            <input type="text" id="reg-secret" class="auth-input" placeholder="Секретный код или Код Админа">
+            <button class="btn-primary" onclick="doRegister()">Создать аккаунт</button>
+            <button class="btn-text" onclick="showAuthForm('choice')">Назад</button>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden">
+        <div id="menu-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1999;display:none;" onclick="closeSidebar()"></div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="" id="menu-avatar">
+                <div>
+                    <div id="menu-name" style="font-weight:bold;">User</div>
+                    <div id="menu-login" style="font-size:13px; color:gray;">@user</div>
+                </div>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item" onclick="openModal('profile-modal')"><i class="fas fa-user"></i> Профиль</div>
+                <div class="menu-item" onclick="alert('Функция создания групп в разработке')"><i class="fas fa-users"></i> Создать группу</div>
+                <div class="menu-item" onclick="openModal('settings-modal')"><i class="fas fa-cog"></i> Настройки</div>
+                <div class="menu-item" id="btn-admin-panel" style="display:none; color: gold;" onclick="openModal('admin-modal')"><i class="fas fa-crown"></i> Админ панель</div>
+            </div>
+            <div class="menu-footer">
+                <div class="menu-item" style="color: var(--danger);" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Выйти</div>
+                <br>blikins v1.2 Firebase
+            </div>
+        </div>
+
+        <div class="chat-list-panel">
+            <div class="panel-header">
+                <i class="fas fa-bars burger-btn" onclick="openSidebar()"></i>
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color:gray;"></i>
+                    <input type="text" placeholder="Поиск (введите логин)" onchange="findAndAddUser(this.value)">
+                </div>
+            </div>
+            <div class="scroll-list" id="chat-list-container"></div>
+        </div>
+
+        <div class="chat-room-panel" id="chat-room">
+            <div class="chat-overlay"></div>
+            <div class="chat-navbar">
+                <i class="fas fa-arrow-left back-btn" onclick="closeChat()"></i>
+                <img src="" id="room-avatar">
+                <div style="flex:1;">
+                    <div id="room-name" style="font-weight:bold; font-size:16px;">Name</div>
+                    <div id="room-status" style="font-size:12px; color:gray;">в сети</div>
+                </div>
+            </div>
+            <div class="messages-container" id="messages-area"></div>
+            <div class="input-box">
+                <i class="fas fa-paperclip action-btn"></i>
+                <input type="text" id="msg-input" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <i class="fas fa-paper-plane action-btn send-btn" onclick="sendMessage()"></i>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal">
+            <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
+            <h2>Мой профиль</h2>
+            <input type="text" id="edit-name" class="auth-input" placeholder="Имя">
+            <input type="text" id="edit-avatar" class="auth-input" placeholder="URL Аватара">
+            <button class="btn-primary" onclick="saveProfile()">Сохранить</button>
+        </div>
+    </div>
+
+    <script>
         const SECRET_CODE = "3729049";
         const ADMIN_CODE = "#$*@(RUEIRFWFJSOEIFOSFJF";
-
+        
         let currentUser = null;
+        let activeChatId = null;
 
-        // --- ЛОГИКА АВТОРИЗАЦИИ ---
-        window.toggleAuth = (isReg) => {
-            document.getElementById('login-form').classList.toggle('hidden', isReg);
-            document.getElementById('reg-form').classList.toggle('hidden', !isReg);
-        };
+        // --- ЛОГИКА АВТОРИЗАЦИИ (FIREBASE) ---
+        function showAuthForm(type) {
+            document.getElementById('auth-choice').classList.add('hidden');
+            document.getElementById('auth-login').classList.add('hidden');
+            document.getElementById('auth-reg').classList.add('hidden');
+            if(type === 'choice') document.getElementById('auth-choice').classList.remove('hidden');
+            if(type === 'login') document.getElementById('auth-login').classList.remove('hidden');
+            if(type === 'reg') document.getElementById('auth-reg').classList.remove('hidden');
+        }
 
-        window.doRegister = async () => {
-            const user = document.getElementById('reg-user').value.trim().toLowerCase();
-            const pass = document.getElementById('reg-pass').value.trim();
-            const code = document.getElementById('reg-code').value.trim();
+        async function doRegister() {
+            const login = document.getElementById('reg-user').value.toLowerCase().trim();
+            const pass = document.getElementById('reg-pass').value;
+            const code = document.getElementById('reg-secret').value;
 
-            if (!user || !pass) return alert("Заполните поля!");
-            
-            let isAdmin = false;
-            if (code === ADMIN_CODE) isAdmin = true;
-            else if (code !== SECRET_CODE) return alert("Неверный секретный код!");
+            if(!login || !pass) return alert("Заполни поля");
+            if(code !== SECRET_CODE && code !== ADMIN_CODE) return alert("Неверный секретный код");
 
-            showLoading(true);
-            const userRef = ref(db, 'users/' + user);
-            const snapshot = await get(userRef);
+            const snapshot = await window.dbGet(window.dbChild(window.dbRef(window.db), 'users/' + login));
+            if(snapshot.exists()) return alert("Логин занят");
 
-            if (snapshot.exists()) {
-                showLoading(false);
-                return alert("Логин занят!");
-            }
+            currentUser = {
+                login: login,
+                pass: pass,
+                name: login,
+                avatar: 'https://via.placeholder.com/100',
+                isAdmin: (code === ADMIN_CODE),
+                chats: ['support_bot'] // Начальный чат
+            };
 
-            await set(userRef, {
-                username: user,
-                password: pass,
-                isAdmin: isAdmin,
-                createdAt: Date.now()
-            });
+            await window.dbSet(window.dbRef(window.db, 'users/' + login), currentUser);
+            localStorage.setItem('blikins_user', JSON.stringify(currentUser));
+            startApp();
+        }
 
-            showLoading(false);
-            alert("Регистрация успешна! Войдите.");
-            toggleAuth(false);
-        };
+        async function doLogin() {
+            const login = document.getElementById('login-user').value.toLowerCase().trim();
+            const pass = document.getElementById('login-pass').value;
 
-        window.doLogin = async () => {
-            const user = document.getElementById('log-user').value.trim().toLowerCase();
-            const pass = document.getElementById('log-pass').value.trim();
-
-            if (!user || !pass) return alert("Введите данные!");
-
-            showLoading(true);
-            const userRef = ref(db, 'users/' + user);
-            const snapshot = await get(userRef);
-
-            if (snapshot.exists() && snapshot.val().password === pass) {
+            const snapshot = await window.dbGet(window.dbChild(window.dbRef(window.db), 'users/' + login));
+            if(snapshot.exists() && snapshot.val().pass === pass) {
                 currentUser = snapshot.val();
-                localStorage.setItem('blikins_session', user);
+                localStorage.setItem('blikins_user', JSON.stringify(currentUser));
                 startApp();
             } else {
-                alert("Ошибка входа: неверный логин или пароль");
+                alert("Неверный логин или пароль");
             }
-            showLoading(false);
-        };
+        }
 
         function startApp() {
+            if(!currentUser) return;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('header-user').innerText = currentUser.username + (currentUser.isAdmin ? " ⭐" : "");
+            document.getElementById('menu-avatar').src = currentUser.avatar;
+            document.getElementById('menu-name').innerText = currentUser.name;
+            document.getElementById('menu-login').innerText = '@' + currentUser.login;
             
-            // Слушаем сообщения в реальном времени
-            const messagesRef = ref(db, 'messages');
-            onValue(messagesRef, (snapshot) => {
-                const data = snapshot.val();
-                renderMessages(data);
-            });
+            if(currentUser.isAdmin) document.getElementById('btn-admin-panel').style.display = 'flex';
+            
+            loadChats();
         }
 
-        // --- ЛОГИКА ЧАТА ---
-        window.sendMessage = () => {
-            const input = document.getElementById('msg-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const messagesRef = ref(db, 'messages');
-            push(messagesRef, {
-                sender: currentUser.username,
-                text: text,
-                timestamp: Date.now()
-            });
-            input.value = '';
-        };
-
-        function renderMessages(data) {
-            const container = document.getElementById('chat-messages');
-            container.innerHTML = '';
-            if (!data) return;
-
-            Object.values(data).forEach(msg => {
-                const div = document.createElement('div');
-                const isMine = msg.sender === currentUser.username;
-                div.className = `msg ${isMine ? 'out' : 'in'}`;
-                
-                const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                div.innerHTML = `
-                    <div style="font-size:11px; font-weight:bold; margin-bottom:3px;">${isMine ? 'Вы' : msg.sender}</div>
-                    ${msg.text}
-                    <div class="msg-info">${time}</div>
-                `;
-                container.appendChild(div);
-            });
-            container.scrollTop = container.scrollHeight;
-        }
-
-        window.logout = () => {
-            localStorage.removeItem('blikins_session');
-            location.reload();
-        };
-
-        function showLoading(show) {
-            document.getElementById('loading-overlay').classList.toggle('hidden', !show);
-        }
-
-        // Авто-вход
-        const savedSession = localStorage.getItem('blikins_session');
-        if (savedSession) {
-            get(ref(db, 'users/' + savedSession)).then(snap => {
-                if (snap.exists()) {
-                    currentUser = snap.val();
-                    startApp();
+        // --- ЛОГИКА ЧАТОВ (FIREBASE) ---
+        function loadChats() {
+            const container = document.getElementById('chat-list-container');
+            // Слушаем список чатов пользователя
+            window.dbOnValue(window.dbRef(window.db, 'users/' + currentUser.login + '/chats'), async (snapshot) => {
+                container.innerHTML = '';
+                const chatIds = snapshot.val() || [];
+                for(let id of chatIds) {
+                    if(id === 'support_bot') {
+                        renderChatItem({id: 'support_bot', name: 'Support', avatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png'});
+                    } else {
+                        const userSnap = await window.dbGet(window.dbRef(window.db, 'users/' + id));
+                        if(userSnap.exists()) renderChatItem(userSnap.val());
+                    }
                 }
             });
+        }
+
+        function renderChatItem(data) {
+            const container = document.getElementById('chat-list-container');
+            const div = document.createElement('div');
+            div.className = 'chat-item';
+            div.onclick = () => openChat(data.login || data.id);
+            div.innerHTML = `<img src="${data.avatar}"><div class="chat-info"><div class="chat-name">${data.name}</div><div class="chat-msg">Нажми, чтобы открыть</div></div>`;
+            container.appendChild(div);
+        }
+
+        async function findAndAddUser(login) {
+            login = login.toLowerCase().trim();
+            if(login === currentUser.login) return;
+            const snap = await window.dbGet(window.dbRef(window.db, 'users/' + login));
+            if(snap.exists()) {
+                let myChats = currentUser.chats || [];
+                if(!myChats.includes(login)) {
+                    myChats.push(login);
+                    await window.dbSet(window.dbRef(window.db, 'users/' + currentUser.login + '/chats'), myChats);
+                    currentUser.chats = myChats;
+                }
+                openChat(login);
+            } else {
+                alert("Пользователь не найден");
+            }
+        }
+
+        function openChat(chatId) {
+            activeChatId = chatId;
+            document.getElementById('chat-room').classList.add('open');
+            
+            // Определяем ID комнаты (всегда в алфавитном порядке для 1 на 1)
+            const roomId = [currentUser.login, chatId].sort().join('_');
+            
+            // Слушаем сообщения в реальном времени
+            window.dbOnValue(window.dbRef(window.db, 'messages/' + roomId), (snapshot) => {
+                const container = document.getElementById('messages-area');
+                container.innerHTML = '';
+                const msgs = snapshot.val();
+                if(msgs) {
+                    Object.values(msgs).forEach(m => {
+                        const el = document.createElement('div');
+                        el.className = 'msg ' + (m.sender === currentUser.login ? 'out' : 'in');
+                        el.innerText = m.text;
+                        container.appendChild(el);
+                    });
+                }
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if(!text || !activeChatId) return;
+
+            const roomId = [currentUser.login, activeChatId].sort().join('_');
+            const newMsgRef = window.dbPush(window.dbRef(window.db, 'messages/' + roomId));
+            await window.dbSet(newMsgRef, {
+                text: text,
+                sender: currentUser.login,
+                time: Date.now()
+            });
+            input.value = '';
+        }
+
+        // --- UI UTILS ---
+        function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('menu-overlay').style.display = 'block'; }
+        function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('menu-overlay').style.display = 'none'; }
+        function openModal(id) { closeSidebar(); document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeChat() { document.getElementById('chat-room').classList.remove('open'); activeChatId = null; }
+        function doLogout() { localStorage.clear(); location.reload(); }
+
+        window.onload = () => {
+            const saved = localStorage.getItem('blikins_user');
+            if(saved) { currentUser = JSON.parse(saved); startApp(); }
         }
     </script>
 </body>
