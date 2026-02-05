@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>blikins v9 Gold</title>
+    <title>blikins v9.1 FIXED</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --bg-dark: #0b0e11; --bg-card: #15191c; --bg-hover: #1f2428; --accent: #0088cc; --text-main: #e1e1e1; --pepe-gold: #ffcc00; --danger: #ff4d4d; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; outline: none; transition: 0.15s; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: 0.2s; }
         body { margin: 0; background: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
         .hidden { display: none !important; }
         .premium-nick { color: #00d2ff !important; text-shadow: 0 0 10px #00d2ff; font-weight: bold; }
         
-        /* Layout */
         #app-screen { display: flex; width: 100%; height: 100%; }
         .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: var(--bg-card); z-index: 3000; transform: translateX(-100%); box-shadow: 10px 0 30px #000; display: flex; flex-direction: column; }
         .sidebar.active { transform: translateX(0); }
@@ -25,8 +24,8 @@
         .chat-room-panel { flex: 1; display: flex; flex-direction: column; background: #0e1215; position: relative; }
         .messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
         
-        .msg { max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 14px; position: relative; }
-        .msg img { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
+        .msg { max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 14px; }
+        .msg img { max-width: 100%; border-radius: 10px; margin-top: 5px; cursor: pointer; }
         .msg.out { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 2px; }
         .msg.in { align-self: flex-start; background: var(--bg-card); border-bottom-left-radius: 2px; }
 
@@ -34,12 +33,9 @@
         .modal-content { background: var(--bg-card); width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         
         .btn-main { background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        .btn-ghost { background: var(--bg-hover); color: #fff; border: none; padding: 10px; border-radius: 10px; cursor: pointer; margin-top: 5px; width: 100%; text-align: left; }
+        .btn-ghost { background: var(--bg-hover); color: #fff; border: none; padding: 10px; border-radius: 10px; cursor: pointer; margin-top: 5px; width: 100%; text-align: center; }
 
-        .emoji-panel { display: flex; gap: 8px; padding: 5px; overflow-x: auto; background: var(--bg-card); }
-        .emoji-item { cursor: pointer; font-size: 20px; }
-
-        @media (max-width: 800px) { .chat-list-panel { width: 100%; } .chat-room-panel { position: fixed; inset: 0; transform: translateX(100%); z-index: 2000; width: 100%; } .chat-room-panel.open { transform: translateX(0); } }
+        @media (max-width: 800px) { .chat-list-panel { width: 100%; } .chat-room-panel { position: fixed; inset: 0; transform: translateX(100%); z-index: 2000; } .chat-room-panel.open { transform: translateX(0); } }
     </style>
 </head>
 <body>
@@ -47,29 +43,27 @@
     <div id="auth-screen" style="position:fixed; inset:0; z-index:9999; background:var(--bg-dark); display:flex; align-items:center; justify-content:center;">
         <div style="background:var(--bg-card); padding:30px; border-radius:20px; width:320px; text-align:center;">
             <h1>blikins</h1>
-            <input type="text" id="auth-login" placeholder="Login" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border-radius:8px; border:1px solid #333;">
-            <input type="password" id="auth-pass" placeholder="Password" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border-radius:8px; border:1px solid #333;">
+            <input type="text" id="auth-login" placeholder="Login" style="width:100%; padding:10px; margin-bottom:10px; background:#000; border:1px solid #333; color:#fff;">
+            <input type="password" id="auth-pass" placeholder="Password" style="width:100%; padding:10px; margin-bottom:10px; background:#000; border:1px solid #333; color:#fff;">
+            <input type="text" id="auth-code" placeholder="Invite Code" style="width:100%; padding:10px; margin-bottom:15px; background:#000; border:1px solid #333; color:#fff;">
             <button class="btn-main" onclick="handleAuth()">Enter</button>
-            <div onclick="toggleLang()" style="margin-top:15px; cursor:pointer; color:var(--accent);">UA / RU / EN</div>
         </div>
     </div>
 
     <div id="app-screen" class="hidden">
-        <div id="menu-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2900; display:none;" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header"><img src="" id="menu-avatar"><div id="menu-name"></div><div style="color:var(--pepe-gold);">P: <span id="balance-val">0</span></div></div>
             <div style="padding:15px;">
-                <button class="btn-ghost" onclick="viewProfile(currentUser.login)"><i class="fas fa-cog"></i> Settings</button>
-                <button id="admin-btn" class="btn-ghost hidden" style="color:var(--pepe-gold);" onclick="openAdmin()"><i class="fas fa-crown"></i> Admin</button>
-                <button class="btn-ghost" onclick="toggleLang()"><i class="fas fa-language"></i> Language</button>
-                <button class="btn-ghost" style="color:var(--danger); margin-top:20px;" onclick="logout()"><i class="fas fa-power-off"></i> Exit</button>
+                <button class="btn-ghost" onclick="viewProfile(window.currentUser.login)">Налаштування</button>
+                <button id="admin-btn" class="btn-ghost hidden" style="color:var(--pepe-gold);" onclick="openAdmin()">Адмін-панель</button>
+                <button class="btn-ghost" style="color:var(--danger); margin-top:20px;" onclick="logout()">Вихід</button>
             </div>
         </div>
 
         <div class="chat-list-panel">
             <div class="navbar">
                 <i class="fas fa-bars" onclick="toggleSidebar(true)" style="cursor:pointer;"></i>
-                <input type="text" id="search-input" placeholder="Search @login..." oninput="handleSearch(this.value)" style="flex:1; background:var(--bg-card); border:none; padding:10px; border-radius:10px; color:#fff;">
+                <input type="text" id="search-input" placeholder="Пошук @логін..." oninput="handleSearch(this.value)" style="flex:1; background:var(--bg-card); border:none; padding:10px; border-radius:10px; color:#fff;">
                 <i class="fas fa-plus-circle" onclick="openCreateGroup()" style="cursor:pointer; color:var(--accent); font-size:22px;"></i>
             </div>
             <div id="chat-list" style="flex:1; overflow-y:auto;"></div>
@@ -78,24 +72,19 @@
         <div class="chat-room-panel" id="chat-room">
             <div class="navbar">
                 <i class="fas fa-arrow-left" onclick="closeChat()" style="cursor:pointer;"></i>
-                <img src="" id="room-avatar" onclick="openChatSettings()" style="width:35px; height:35px; border-radius:8px; margin-left:10px; cursor:pointer; object-fit:cover;">
+                <img src="" id="room-avatar" onclick="openChatSettings()" style="width:35px; height:35px; border-radius:8px; margin-left:10px; cursor:pointer;">
                 <b id="room-name" style="margin-left:10px;"></b>
             </div>
             <div class="messages" id="msg-container"></div>
-            
-            <div class="emoji-panel">
-                <span class="emoji-item" onclick="addEmoji('😊')">😊</span><span class="emoji-item" onclick="addEmoji('😂')">😂</span><span class="emoji-item" onclick="addEmoji('🔥')">🔥</span><span class="emoji-item" onclick="addEmoji('👍')">👍</span><span class="emoji-item" onclick="addEmoji('❤️')">❤️</span><span class="emoji-item" onclick="addEmoji('🐸')">🐸</span>
-            </div>
-
             <div style="padding:15px; display:flex; gap:10px; background:var(--bg-card); align-items:center;">
                 <label style="cursor:pointer; color:var(--accent); font-size:20px;"><i class="fas fa-image"></i><input type="file" hidden accept="image/*" onchange="sendImage(this)"></label>
-                <input type="text" id="msg-input" placeholder="Message..." style="flex:1; background:var(--bg-dark); border:none; padding:12px; border-radius:12px; color:#fff;">
+                <input type="text" id="msg-input" placeholder="Повідомлення..." style="flex:1; background:var(--bg-dark); border:none; padding:12px; border-radius:12px; color:#fff;">
                 <button onclick="sendMessage()" style="background:none; border:none; color:var(--accent); font-size:22px;"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
-    <div id="modal-container" class="modal-overlay"><div class="modal-content" id="modal-content"></div></div>
+    <div id="modal-container" class="modal-overlay" onclick="if(event.target==this) closeModal()"><div class="modal-content" id="modal-content"></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -105,20 +94,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        window.lang = localStorage.getItem('blikins_lang') || 'ru';
         window.currentUser = null;
         window.activeChatId = null;
 
-        // --- AUTH ---
         window.handleAuth = async () => {
             const login = document.getElementById('auth-login').value.toLowerCase().trim();
             const pass = document.getElementById('auth-pass').value;
-            if(!login || !pass) return;
+            const code = document.getElementById('auth-code').value;
+            if(!login || !pass) return alert("Заповни все!");
+
             const snap = await get(ref(db, 'users/' + login));
             if(snap.exists()) {
-                if(snap.val().pass === pass) loginSuccess(snap.val()); else alert("Error");
+                if(snap.val().pass === pass) loginSuccess(snap.val()); else alert("Wrong password");
             } else {
-                const newUser = { login, pass, name: login, balance: 10, avatar: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' };
+                const newUser = { login, pass, name: login, balance: 10, avatar: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', isAdmin: (code === "3729049") };
                 await set(ref(db, 'users/' + login), newUser);
                 loginSuccess(newUser);
             }
@@ -137,30 +126,29 @@
                 window.currentUser = s.val();
                 document.getElementById('menu-avatar').src = currentUser.avatar;
                 document.getElementById('menu-name').innerText = currentUser.name;
+                document.getElementById('menu-name').className = currentUser.isPremium ? 'premium-nick' : '';
                 document.getElementById('balance-val').innerText = currentUser.balance || 0;
+                if(currentUser.isAdmin) document.getElementById('admin-btn').classList.remove('hidden');
             });
             loadChats();
-            if(currentUser.isAdmin) document.getElementById('admin-btn').classList.remove('hidden');
         }
 
-        // --- SEARCH FIXED ---
         window.handleSearch = async (val) => {
-            const list = document.getElementById('chat-list');
             if(!val) return loadChats();
             const snap = await get(ref(db, 'users'));
+            const list = document.getElementById('chat-list');
             list.innerHTML = "";
             Object.values(snap.val()).forEach(u => {
-                if(u.login.toLowerCase().includes(val.toLowerCase())) {
+                if(u.login.includes(val.toLowerCase())) {
                     const div = document.createElement('div');
                     div.style = "padding:12px; display:flex; gap:10px; align-items:center; cursor:pointer;";
                     div.onclick = () => viewProfile(u.login);
-                    div.innerHTML = `<img src="${u.avatar}" style="width:40px; height:40px; border-radius:10px; object-fit:cover;"><b>${u.name}</b>`;
+                    div.innerHTML = `<img src="${u.avatar}" style="width:40px; height:40px; border-radius:10px;"><b>${u.name}</b>`;
                     list.appendChild(div);
                 }
             });
         };
 
-        // --- CHAT LOGIC ---
         function loadChats() {
             onValue(ref(db, 'chats'), (snap) => {
                 const list = document.getElementById('chat-list'); list.innerHTML = "";
@@ -168,9 +156,10 @@
                 Object.values(snap.val()).forEach(c => {
                     if(c.members?.includes(currentUser.login)) {
                         const div = document.createElement('div');
+                        div.className = "chat-item";
                         div.style = "padding:12px; display:flex; gap:10px; align-items:center; cursor:pointer; border-bottom:1px solid #1f2428;";
                         div.onclick = () => openChat(c.id, c);
-                        div.innerHTML = `<img src="${c.avatar}" style="width:45px; height:45px; border-radius:12px; object-fit:cover;"><div><b>${c.name}</b></div>`;
+                        div.innerHTML = `<img src="${c.avatar}" style="width:45px; height:45px; border-radius:12px; object-fit:cover;"><b>${c.name}</b>`;
                         list.appendChild(div);
                     }
                 });
@@ -187,9 +176,10 @@
                 if(snap.exists()) Object.values(snap.val()).forEach(m => {
                     const d = document.createElement('div');
                     d.className = `msg ${m.login === currentUser.login ? 'out' : 'in'}`;
-                    let content = m.text ? `<div>${m.text}</div>` : '';
-                    if(m.img) content += `<img src="${m.img}" onclick="window.open('${m.img}')">`;
-                    d.innerHTML = `<small style="opacity:0.6;font-size:10px;">${m.sender}</small>${content}`;
+                    let html = `<small style="display:block;opacity:0.6;font-size:10px;margin-bottom:4px;">${m.sender}</small>`;
+                    if(m.text) html += `<div>${m.text}</div>`;
+                    if(m.img) html += `<img src="${m.img}" onclick="window.open('${m.img}')">`;
+                    d.innerHTML = html;
                     cont.appendChild(d);
                 });
                 cont.scrollTop = cont.scrollHeight;
@@ -204,85 +194,86 @@
         };
 
         window.sendImage = (input) => {
-            const file = input.files[0];
             const reader = new FileReader();
             reader.onload = (e) => {
                 push(ref(db, `messages/${activeChatId}`), { img: e.target.result, login: currentUser.login, sender: currentUser.name });
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(input.files[0]);
         };
 
-        window.addEmoji = (e) => { document.getElementById('msg-input').value += e; };
-
-        // --- GROUP SETTINGS & ADD PEOPLE ---
-        window.openChatSettings = async () => {
-            const snap = await get(ref(db, 'chats/' + activeChatId));
-            const chat = snap.val();
-            if(chat.type === 'private') return; // Только для групп
+        window.viewProfile = async (login) => {
+            toggleSidebar(false);
+            const snap = await get(ref(db, 'users/' + login));
+            const u = snap.val();
+            const isMe = login === currentUser.login;
             showModal(`
-                <h3>Settings: ${chat.name}</h3>
-                <img src="${chat.avatar}" id="grp-prev" style="width:80px;height:80px;border-radius:15px;object-fit:cover;">
-                <input type="file" id="grp-file" hidden onchange="readGrpImg(this)">
-                <button class="btn-ghost" onclick="document.getElementById('grp-file').click()">Change Group Photo</button>
-                <hr>
-                <input type="text" id="add-user-login" placeholder="User login to add..." style="width:100%;padding:10px;background:#000;color:#fff;border-radius:8px;">
-                <button class="btn-main" onclick="addUserToChat()">Add Person</button>
-                <button class="btn-ghost" onclick="closeModal()">Close</button>
+                <div style="text-align:center;">
+                    <img src="${u.avatar}" id="p-ava" style="width:100px; height:100px; border-radius:30px; border:2px solid var(--accent); object-fit:cover;">
+                    <h2 class="${u.isPremium?'premium-nick':''}">${u.name} ${u.isVerified?'✅':''}</h2>
+                    ${isMe ? `
+                        <input type="text" id="p-name" value="${u.name}" style="width:100%; padding:10px; margin:10px 0; background:#000; color:#fff; border:1px solid #333;">
+                        <input type="file" id="p-file" hidden onchange="readP(this)">
+                        <button class="btn-ghost" onclick="document.getElementById('p-file').click()">Змінити фото</button>
+                        <button class="btn-main" onclick="saveP()">Зберегти</button>
+                    ` : `
+                        <button class="btn-main" onclick="startDM('${u.login}','${u.name}','${u.avatar}')">Написати</button>
+                    `}
+                    <button class="btn-ghost" onclick="closeModal()">Закрити</button>
+                </div>
             `);
         };
 
-        window.readGrpImg = (i) => {
-            const r = new FileReader();
-            r.onload = async (e) => {
-                document.getElementById('grp-prev').src = e.target.result;
-                await update(ref(db, 'chats/' + activeChatId), { avatar: e.target.result });
-            };
-            r.readAsDataURL(i.files[0]);
-        };
-
-        window.addUserToChat = async () => {
-            const login = document.getElementById('add-user-login').value.toLowerCase().trim();
-            const uSnap = await get(ref(db, 'users/' + login));
-            if(!uSnap.exists()) return alert("User not found!");
-            const cSnap = await get(ref(db, 'chats/' + activeChatId));
-            const members = cSnap.val().members || [];
-            if(!members.includes(login)) members.push(login);
-            await update(ref(db, 'chats/' + activeChatId), { members });
-            alert("Added!");
-        };
-
-        window.openCreateGroup = () => {
-            showModal(`
-                <h3>Create Group</h3>
-                <input type="text" id="g-name" placeholder="Name" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px;">
-                <button class="btn-main" onclick="createGroup()">Create</button>
-            `);
-        };
-
-        window.createGroup = async () => {
-            const name = document.getElementById('g-name').value;
-            if(!name) return;
-            const id = 'GRP_' + Date.now();
-            await set(ref(db, 'chats/' + id), { id, name, type: 'group', members: [currentUser.login], avatar: 'https://cdn-icons-png.flaticon.com/512/681/681494.png' });
+        window.readP = (i) => { const r = new FileReader(); r.onload=(e)=>{document.getElementById('p-ava').src=e.target.result; window.tempA=e.target.result;}; r.readAsDataURL(i.files[0]); };
+        window.saveP = async () => {
+            const upd = { name: document.getElementById('p-name').value };
+            if(window.tempA) upd.avatar = window.tempA;
+            await update(ref(db, 'users/' + currentUser.login), upd);
             closeModal();
         };
 
-        // --- UTILS ---
-        function showModal(h) { document.getElementById('modal-content').innerHTML = h; document.getElementById('modal-container').style.display = 'flex'; }
-        window.closeModal = () => document.getElementById('modal-container').style.display = 'none';
-        window.viewProfile = async (login) => {
-            const snap = await get(ref(db, 'users/' + login));
-            const u = snap.val();
-            showModal(`<div style="text-align:center;"><img src="${u.avatar}" style="width:100px;height:100px;border-radius:20px;"><br><b>${u.name}</b><br>
-            <button class="btn-main" onclick="startDM('${u.login}','${u.name}','${u.avatar}')">Message</button>
-            <button class="btn-ghost" onclick="closeModal()">Close</button></div>`);
-        };
         window.startDM = async (l, n, a) => {
+            if(l === currentUser.login) return alert("Ти не можеш писати сам собі!");
             const id = 'DM_' + [currentUser.login, l].sort().join('_');
             await update(ref(db, `chats/${id}`), { id, name: n, avatar: a, type: 'private', members: [currentUser.login, l] });
             closeModal(); openChat(id, { name: n, avatar: a });
         };
-        window.toggleSidebar = (s) => { document.getElementById('sidebar').classList.toggle('active', s); document.getElementById('menu-overlay').style.display = s ? 'block' : 'none'; };
+
+        window.openAdmin = async () => {
+            const snap = await get(ref(db, 'users'));
+            let h = '<h3>Admin Control</h3><div style="max-height:400px; overflow-y:auto;">';
+            Object.values(snap.val()).forEach(u => {
+                h += `<div style="padding:10px; background:#000; margin-bottom:10px; border-radius:10px;">
+                    <b>@${u.login}</b> (P: ${u.balance || 0})
+                    <button onclick="admSet('${u.login}','isVerified',${!u.isVerified})" style="font-size:10px;">✅</button>
+                    <button onclick="admSet('${u.login}','isPremium',${!u.isPremium})" style="font-size:10px;">💎</button>
+                    <button onclick="admBan('${u.login}')" style="color:red;font-size:10px;">BAN</button>
+                </div>`;
+            });
+            h += '</div>';
+            showModal(h);
+        };
+
+        window.admSet = async (l, k, v) => { await update(ref(db,'users/'+l), {[k]:v}); openAdmin(); };
+        window.admBan = async (l) => { await update(ref(db,'users/'+l), {banUntil: Date.now()+86400000}); openAdmin(); };
+
+        window.openCreateGroup = () => {
+            showModal(`
+                <h3>Нова група</h3>
+                <input type="text" id="g-name" placeholder="Назва" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px;">
+                <button class="btn-main" onclick="createG()">Створити</button>
+            `);
+        };
+        window.createG = async () => {
+            const n = document.getElementById('g-name').value;
+            if(!n) return;
+            const id = 'GRP_' + Date.now();
+            await set(ref(db, 'chats/' + id), { id, name: n, type: 'group', members: [currentUser.login], avatar: 'https://cdn-icons-png.flaticon.com/512/681/681494.png' });
+            closeModal();
+        };
+
+        window.showModal = (h) => { document.getElementById('modal-content').innerHTML = h; document.getElementById('modal-container').style.display = 'flex'; };
+        window.closeModal = () => document.getElementById('modal-container').style.display = 'none';
+        window.toggleSidebar = (s) => document.getElementById('sidebar').classList.toggle('active', s);
         window.closeChat = () => document.getElementById('chat-room').classList.remove('open');
         window.logout = () => { localStorage.clear(); location.reload(); };
 
