@@ -34,7 +34,6 @@
             height: 100vh;
         }
 
-        /* Авторизація */
         .auth-container {
             background: var(--sidebar-bg);
             padding: 30px;
@@ -68,9 +67,8 @@
 
         button:hover { opacity: 0.8; }
 
-        /* Месенджер */
         #messenger-app {
-            display: none; /* Сховано до входу */
+            display: none;
             width: 100%;
             height: 100vh;
             flex-direction: row;
@@ -95,7 +93,7 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background: #0e1621;
         }
 
         .chat-header {
@@ -118,7 +116,6 @@
             gap: 10px;
         }
 
-        /* Бокове меню */
         #side-menu {
             position: fixed;
             left: -300px;
@@ -133,9 +130,6 @@
         }
 
         #side-menu.active { left: 0; }
-
-        .user-info img { border-radius: 50%; margin-bottom: 10px; }
-
         .hidden { display: none; }
     </style>
 </head>
@@ -143,7 +137,7 @@
 
     <div id="auth-screen" class="auth-container">
         <h2 id="auth-title">Вхід BliKins</h2>
-        <input type="text" id="login-email" placeholder="Email (напр. user@bk.com)">
+        <input type="text" id="login-username" placeholder="Введіть логін">
         <input type="password" id="login-pass" placeholder="Пароль">
         
         <div id="reg-extra" class="hidden">
@@ -158,13 +152,13 @@
     <div id="messenger-app">
         <div id="side-menu">
             <div class="user-info">
-                <img id="my-avatar" src="https://via.placeholder.com/60" width="60" height="60">
+                <img id="my-avatar" src="https://via.placeholder.com/60" width="60" height="60" style="border-radius: 50%;">
                 <h3 id="my-name">Логін</h3>
                 <p>Pepe Coins: <span id="my-pepe">0</span> 🐸</p>
             </div>
             <hr>
-            <button onclick="alert('Профіль у розробці')">👤 Профіль</button>
-            <button onclick="toggleTheme()">🌓 Змінити тему</button>
+            <button onclick="alert('Профіль')">👤 Профіль</button>
+            <button onclick="toggleTheme()">🌓 Тема</button>
             <button id="admin-btn" class="hidden" style="background: darkred;">🛡️ Адмін Панель</button>
             <br>
             <button onclick="location.reload()" style="background: #444;">Вийти</button>
@@ -173,31 +167,24 @@
         <div class="sidebar">
             <div class="sidebar-header">
                 <span style="cursor:pointer; font-size: 24px;" onclick="toggleMenu()">☰</span>
-                <input type="text" placeholder="Пошук людей/каналів...">
+                <input type="text" placeholder="Пошук...">
                 <button style="width: 40px;">✎</button>
             </div>
             <div id="chat-list">
                 <div style="padding: 15px; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05);">
                     <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" width="40">
-                    <div>
-                        <strong>Підтримка ✅</strong>
-                        <div style="font-size: 12px; color: gray;">Ласкаво просимо!</div>
-                    </div>
+                    <div><strong>Підтримка ✅</strong><div style="font-size: 12px; color: gray;">Вітаємо!</div></div>
                 </div>
             </div>
         </div>
 
         <div class="chat-window">
             <div class="chat-header" id="chat-name">Офіційний бот</div>
-            <div id="messages">
-                <div style="background: var(--accent-color); padding: 10px; border-radius: 10px; max-width: 70%; margin-bottom: 10px;">
-                    Привіт! Я твій помічник BliKins. Тут будуть твої повідомлення.
-                </div>
-            </div>
+            <div id="messages"></div>
             <div class="input-area">
                 <button style="width: 50px;">📎</button>
                 <input type="text" id="msg-input" placeholder="Повідомлення...">
-                <button style="width: 80px;" onclick="alert('Відправка скоро запрацює!')">Send</button>
+                <button style="width: 80px;" onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
@@ -207,7 +194,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
         import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        // Твоя конфігурація
         const firebaseConfig = {
             apiKey: "AIzaSyBV3cEHIGsVyCSeNy1eo4ZBj7vhL0f0nHA",
             authDomain: "blikins-23ca8.firebaseapp.com",
@@ -224,7 +210,6 @@
 
         let isReg = false;
 
-        // Перемикання Вхід/Реєстрація
         window.toggleReg = () => {
             isReg = !isReg;
             document.getElementById('reg-extra').classList.toggle('hidden');
@@ -232,13 +217,18 @@
             document.getElementById('auth-btn').innerText = isReg ? 'Створити акаунт' : 'Увійти';
         };
 
-        // Логіка Кнопки
         window.handleAuth = async () => {
-            const email = document.getElementById('login-email').value;
+            const username = document.getElementById('login-username').value;
             const pass = document.getElementById('login-pass').value;
+            const confirmPass = document.getElementById('login-pass-confirm').value;
             const code = document.getElementById('secret-code').value;
 
+            // Створюємо віртуальний email з логіна
+            const email = username + "@blikins.com";
+
             if (isReg) {
+                if(pass !== confirmPass) { alert("Паролі не співпадають!"); return; }
+                
                 let role = "";
                 if (code === "232348") role = "user";
                 else if (code === "*?№3827428") role = "admin";
@@ -247,21 +237,21 @@
                 try {
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await set(ref(db, 'users/' + res.user.uid), {
-                        username: email.split('@')[0],
+                        username: username,
                         role: role,
                         pepeCoins: 0,
                         avatar: "https://via.placeholder.com/60"
                     });
-                    alert("Успіх! Тепер увійдіть.");
+                    alert("Реєстрація успішна!");
                     location.reload();
-                } catch (e) { alert(e.message); }
+                } catch (e) { alert("Помилка: " + e.message); }
             } else {
                 try {
                     const res = await signInWithEmailAndPassword(auth, email, pass);
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('messenger-app').style.display = 'flex';
                     loadUser(res.user.uid);
-                } catch (e) { alert("Помилка: " + e.message); }
+                } catch (e) { alert("Невірний логін або пароль"); }
             }
         };
 
@@ -277,7 +267,6 @@
 
         window.toggleMenu = () => document.getElementById('side-menu').classList.toggle('active');
         window.toggleTheme = () => document.body.classList.toggle('light-theme');
-
     </script>
 </body>
 </html>
