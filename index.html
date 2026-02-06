@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BliKins Messenger</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BliKins Mobile</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #6c5ce7; /* Фиолетовый BliKins */
-            --secondary: #00b894; /* Зеленый акцент */
+            --primary: #6c5ce7;
+            --secondary: #00b894;
             --bg-dark: #1e1e2e;
             --bg-panel: #2d2d44;
             --text-main: #ffffff;
@@ -16,13 +16,15 @@
             --danger: #ff7675;
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* Важно для мобилки */
             display: flex;
             flex-direction: column;
         }
@@ -33,241 +35,284 @@
             justify-content: center;
             align-items: center;
             height: 100%;
+            width: 100%;
+            position: absolute;
+            z-index: 999;
             background: linear-gradient(135deg, #1e1e2e 0%, #4834d4 100%);
         }
         .auth-box {
             background: var(--bg-panel);
-            padding: 30px;
+            padding: 25px;
             border-radius: 20px;
-            width: 350px;
+            width: 90%;
+            max-width: 350px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             text-align: center;
         }
         .auth-box input {
-            width: 90%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 10px;
+            width: 100%;
+            padding: 15px; /* Больше для пальцев */
+            margin: 8px 0;
+            border-radius: 12px;
             border: none;
             background: #181825;
             color: white;
+            font-size: 16px;
         }
         .btn {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 12px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.2s;
             width: 100%;
+            font-size: 16px;
+            margin-top: 10px;
         }
-        .btn:hover { opacity: 0.9; }
-        .link { color: var(--secondary); cursor: pointer; font-size: 0.9em; margin-top: 10px; display: block; }
+        .link { color: var(--secondary); margin-top: 15px; display: block; padding: 10px; }
 
-        /* --- MAIN APP --- */
-        #app-screen { display: none; height: 100%; width: 100%; position: relative; }
-        
-        /* SIDEBAR (Profile/Settings) */
+        /* --- MAIN APP LAYOUT --- */
+        #app-screen { 
+            display: none; 
+            height: 100%; 
+            width: 100%; 
+            position: relative; 
+        }
+
+        /* Views Management for Mobile */
+        .view-section {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.3s ease;
+            background: var(--bg-dark);
+        }
+
+        /* By default List is active, Chat is off-screen right */
+        #chat-list-view { z-index: 10; transform: translateX(0); }
+        #chat-window-view { z-index: 20; transform: translateX(100%); }
+
+        /* Classes to toggle views */
+        .show-chat #chat-list-view { transform: translateX(-20%); } /* Parallax effect */
+        .show-chat #chat-window-view { transform: translateX(0); }
+
+        /* --- SIDEBAR --- */
         #sidebar {
             position: absolute;
-            left: -300px;
+            left: -100%; /* Hidden */
             top: 0;
             bottom: 0;
-            width: 280px;
+            width: 85%; /* Mobile drawer width */
+            max-width: 300px;
             background: var(--bg-panel);
             z-index: 100;
-            transition: 0.3s;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 20px;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
         }
         #sidebar.open { left: 0; }
-        .user-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 20px; }
-        .user-avatar-lg { width: 80px; height: 80px; border-radius: 50%; background: var(--secondary); margin: 0 auto 10px; object-fit: cover;}
-        .pepe-coins { color: gold; font-weight: bold; margin-top: 5px; }
-        .sidebar-btn { padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-radius: 8px; }
-        .sidebar-btn:hover { background: rgba(255,255,255,0.1); }
-        .sidebar-btn.logout { margin-top: auto; color: var(--danger); }
-
-        /* MAIN LAYOUT */
-        .main-container { display: flex; width: 100%; height: 100%; }
-        
-        /* LEFT LIST (Chats) */
-        .chat-list-panel {
-            width: 350px;
-            background: #252538;
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 90;
+            display: none;
+            backdrop-filter: blur(2px);
         }
+        .sidebar-overlay.open { display: block; }
+        
+        .user-header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #444; padding-bottom: 20px; }
+        .user-avatar-lg { width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 10px; object-fit: cover; border: 3px solid var(--primary); }
+        .sidebar-btn { padding: 15px; font-size: 18px; display: flex; align-items: center; gap: 15px; border-radius: 8px; margin-bottom: 5px; }
+        .sidebar-btn:active { background: rgba(255,255,255,0.1); }
+
+        /* --- CHAT LIST --- */
         .header-bar {
             padding: 15px;
             background: var(--bg-panel);
             display: flex;
             align-items: center;
             gap: 15px;
+            height: 60px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .search-bar {
             flex: 1;
             background: #181825;
             border: none;
-            padding: 8px 12px;
-            border-radius: 20px;
+            padding: 10px 15px;
+            border-radius: 25px;
             color: white;
+            font-size: 16px;
+        }
+        #chats-container {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .chat-item {
             padding: 15px;
             display: flex;
             align-items: center;
             gap: 15px;
-            cursor: pointer;
             border-bottom: 1px solid #333;
+            active: background: #2d2d44;
         }
-        .chat-item:hover { background: #2d2d44; }
-        .chat-avatar { width: 45px; height: 45px; border-radius: 50%; background: gray; object-fit: cover; }
-        .official-badge { color: #00b894; margin-left: 5px; }
+        .chat-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .chat-info { flex: 1; min-width: 0; } /* min-width fix for flex text truncation */
+        .chat-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; }
+        .chat-last-msg { color: #aaa; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* RIGHT PANEL (Chat) */
-        .chat-window {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: url('https://www.transparenttextures.com/patterns/cubes.png'), var(--bg-dark); /* Фон паттерн */
-        }
+        /* --- CHAT WINDOW --- */
         .chat-header {
-            padding: 15px;
+            padding: 10px 15px;
             background: var(--bg-panel);
             display: flex;
             align-items: center;
             gap: 15px;
+            height: 60px;
             border-bottom: 1px solid #333;
         }
+        .back-btn { font-size: 20px; padding: 10px; margin-left: -10px; }
+        
         .messages-area {
             flex: 1;
-            padding: 20px;
+            padding: 15px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            background: url('https://www.transparenttextures.com/patterns/cubes.png'), #181825;
         }
         .msg {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            position: relative;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
         }
-        .msg.mine { align-self: flex-end; background: var(--primary); border-bottom-right-radius: 2px; }
-        .msg.theirs { align-self: flex-start; background: #3b3b55; border-bottom-left-radius: 2px; }
+        .msg.mine { align-self: flex-end; background: var(--primary); border-bottom-right-radius: 4px; }
+        .msg.theirs { align-self: flex-start; background: #3b3b55; border-bottom-left-radius: 4px; }
+        
         .msg-input-area {
-            padding: 15px;
+            padding: 10px;
             background: var(--bg-panel);
             display: flex;
             align-items: center;
             gap: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Для iPhone без кнопок */
         }
-        .input-msg { flex: 1; padding: 12px; border-radius: 20px; border: none; background: #181825; color: white; }
+        .input-msg { 
+            flex: 1; padding: 12px; border-radius: 25px; 
+            border: none; background: #181825; color: white; font-size: 16px; 
+        }
+        .send-btn {
+            width: 45px; height: 45px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
 
-        /* MODALS */
+        /* --- MODALS --- */
         .modal {
             display: none;
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 200;
             justify-content: center;
-            align-items: center;
+            align-items: flex-end; /* Mobile sheet style */
         }
         .modal-content {
             background: var(--bg-panel);
             padding: 25px;
-            border-radius: 15px;
-            width: 400px;
-            max-height: 80vh;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-height: 85vh;
             overflow-y: auto;
+            animation: slideUp 0.3s ease;
         }
-        .close-modal { float: right; cursor: pointer; font-size: 1.2em; }
-        
-        /* ADMIN PANEL SPECIFICS */
-        .admin-user-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px; background: #1e1e2e; margin-bottom: 5px; border-radius: 5px;
-        }
-        .admin-actions { display: flex; gap: 5px; }
-        .icon-btn { cursor: pointer; padding: 5px; color: var(--text-muted); }
-        .icon-btn:hover { color: var(--text-main); }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .icon-btn { font-size: 20px; padding: 5px; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-box" id="login-form">
-            <h2>Вход в BliKins</h2>
-            <input type="text" id="login-email" placeholder="Логин (Email)">
+            <h1 style="color:var(--primary); margin:0 0 20px;">BliKins</h1>
+            <input type="text" id="login-email" placeholder="Логин">
             <input type="password" id="login-pass" placeholder="Пароль">
             <button class="btn" onclick="login()">Войти</button>
-            <span class="link" onclick="toggleAuth('register')">Нет аккаунта? Регистрация</span>
+            <span class="link" onclick="toggleAuth('register')">Создать аккаунт</span>
         </div>
 
         <div class="auth-box" id="register-form" style="display: none;">
             <h2>Регистрация</h2>
-            <input type="text" id="reg-login" placeholder="Логин (без пробелов)">
+            <input type="text" id="reg-login" placeholder="Логин (a-z)">
             <input type="password" id="reg-pass" placeholder="Пароль">
             <input type="password" id="reg-pass-conf" placeholder="Повтор пароля">
             <input type="text" id="reg-secret" placeholder="Секретный код">
-            <button class="btn" onclick="register()">Создать аккаунт</button>
-            <span class="link" onclick="toggleAuth('login')">Уже есть аккаунт? Войти</span>
+            <button class="btn" onclick="register()">Готово</button>
+            <span class="link" onclick="toggleAuth('login')">Отмена</span>
         </div>
     </div>
 
     <div id="app-screen">
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
         <div id="sidebar">
             <div class="user-header">
                 <img src="" id="side-avatar" class="user-avatar-lg">
                 <h3 id="side-username">User</h3>
-                <div class="pepe-coins"><i class="fas fa-coins"></i> <span id="coin-balance">0</span> Pepe</div>
+                <div style="color: gold; font-size:18px; font-weight:bold;">
+                    <i class="fas fa-coins"></i> <span id="coin-balance">0</span>
+                </div>
             </div>
             <div class="sidebar-btn" onclick="openProfile()"><i class="fas fa-user"></i> Профиль</div>
             <div class="sidebar-btn" onclick="openSettings()"><i class="fas fa-cog"></i> Настройки</div>
             <div class="sidebar-btn" id="admin-btn" style="display:none;" onclick="openAdminPanel()"><i class="fas fa-shield-alt"></i> Админ панель</div>
-            <div class="sidebar-btn logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</div>
+            <div class="sidebar-btn" style="color:var(--danger); margin-top:auto;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</div>
         </div>
 
-        <div class="main-container">
-            <div class="chat-list-panel">
-                <div class="header-bar">
-                    <i class="fas fa-bars icon-btn" onclick="toggleSidebar()"></i>
-                    <input type="text" class="search-bar" placeholder="Поиск людей/каналов..." id="search-input" oninput="searchUsers(this.value)">
-                    <i class="fas fa-pen icon-btn" onclick="openCreateMenu()"></i>
-                </div>
-                <div id="chats-container">
-                    </div>
+        <div class="view-section" id="chat-list-view">
+            <div class="header-bar">
+                <i class="fas fa-bars icon-btn" style="font-size:24px;" onclick="toggleSidebar()"></i>
+                <input type="text" class="search-bar" placeholder="Поиск..." id="search-input" oninput="searchUsers(this.value)">
+                <i class="fas fa-pen icon-btn" style="background:var(--primary); color:white; width:40px; height:40px; display:flex; justify-content:center; align-items:center; border-radius:50%;" onclick="openCreateMenu()"></i>
             </div>
-
-            <div class="chat-window">
-                <div class="chat-header" id="active-chat-header" style="display:none;">
-                    <img src="" id="chat-header-avatar" class="chat-avatar">
-                    <div style="flex:1;">
-                        <h4 style="margin:0;" id="chat-header-name">Name</h4>
-                        <small style="color:var(--text-muted);" id="chat-header-status">online</small>
-                    </div>
-                    <i class="fas fa-ellipsis-v icon-btn"></i>
+            <div id="chats-container">
                 </div>
-                
-                <div class="messages-area" id="messages-area">
-                    <div style="text-align:center; margin-top:50px; color: gray;">
-                        <h3>Добро пожаловать в BliKins</h3>
-                        <p>Выберите чат или найдите друга</p>
-                    </div>
-                </div>
+        </div>
 
-                <div class="msg-input-area" id="input-area" style="display:none;">
-                    <i class="fas fa-paperclip icon-btn"></i>
-                    <input type="text" class="input-msg" id="message-input" placeholder="Написать сообщение...">
-                    <i class="far fa-smile icon-btn"></i>
-                    <i class="fas fa-paper-plane icon-btn" onclick="sendMessage()" style="color:var(--secondary)"></i>
+        <div class="view-section" id="chat-window-view">
+            <div class="chat-header">
+                <i class="fas fa-arrow-left back-btn" onclick="closeChat()"></i>
+                <img src="" id="chat-header-avatar" class="chat-avatar">
+                <div style="flex:1; overflow:hidden;">
+                    <h4 style="margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="chat-header-name">Name</h4>
+                    <small style="color:var(--text-muted);" id="chat-header-status">в сети</small>
+                </div>
+                <i class="fas fa-ellipsis-v icon-btn"></i>
+            </div>
+            
+            <div class="messages-area" id="messages-area"></div>
+
+            <div class="msg-input-area" id="input-area">
+                <i class="fas fa-paperclip icon-btn"></i>
+                <input type="text" class="input-msg" id="message-input" placeholder="Сообщение...">
+                <div class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
                 </div>
             </div>
         </div>
@@ -275,32 +320,34 @@
 
     <div id="create-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('create-modal')">&times;</span>
-            <h3>Создать</h3>
-            <button class="btn" style="margin-bottom:10px; background:#e17055;" onclick="createChat('group')">Группу</button>
-            <button class="btn" onclick="createChat('channel')">Канал</button>
-        </div>
-    </div>
-
-    <div id="admin-modal" class="modal">
-        <div class="modal-content" style="width: 600px;">
-            <span class="close-modal" onclick="closeModal('admin-modal')">&times;</span>
-            <h3>Админ Панель</h3>
-            <p>Всего пользователей: <span id="total-users">0</span></p>
-            <div id="admin-users-list" style="margin-top:20px;">
-                </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3>Создать</h3>
+                <span onclick="closeModal('create-modal')" style="font-size:24px;">&times;</span>
+            </div>
+            <button class="btn" style="margin-bottom:10px; background:#e17055;" onclick="createChat('group')">👥 Группу</button>
+            <button class="btn" onclick="createChat('channel')">📢 Канал</button>
         </div>
     </div>
 
     <div id="profile-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
             <h3>Редактировать профиль</h3>
-            <p>Логин: <span id="edit-login" style="color:gray;"></span></p>
-            <input type="text" id="edit-name" placeholder="Имя">
-            <input type="text" id="edit-bio" placeholder="Описания">
-            <input type="text" id="edit-avatar" placeholder="Ссылка на фото (URL)">
+            <input type="text" id="edit-name" class="input-msg" style="width:100%; margin-bottom:10px;" placeholder="Имя">
+            <input type="text" id="edit-bio" class="input-msg" style="width:100%; margin-bottom:10px;" placeholder="О себе">
+            <input type="text" id="edit-avatar" class="input-msg" style="width:100%; margin-bottom:10px;" placeholder="URL Аватара">
             <button class="btn" onclick="saveProfile()">Сохранить</button>
+            <br><br>
+            <span class="link" onclick="closeModal('profile-modal')">Закрыть</span>
+        </div>
+    </div>
+    
+    <div id="admin-modal" class="modal">
+        <div class="modal-content" style="height:80vh;">
+            <div style="display:flex; justify-content:space-between;">
+                <h3>Админ Панель</h3>
+                <span onclick="closeModal('admin-modal')">&times;</span>
+            </div>
+            <div id="admin-users-list" style="margin-top:20px;"></div>
         </div>
     </div>
 
@@ -308,7 +355,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, get, push, onValue, update, child } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
         
-        // --- CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBV3cEHIGsVyCSeNy1eo4ZBj7vhL0f0nHA",
             authDomain: "blikins-23ca8.firebaseapp.com",
@@ -326,18 +372,14 @@
         let currentUser = null;
         let currentChatId = null;
 
-        // --- AUTH FUNCTIONS ---
+        // --- AUTH ---
         window.toggleAuth = (screen) => {
             document.getElementById('login-form').style.display = screen === 'login' ? 'block' : 'none';
             document.getElementById('register-form').style.display = screen === 'register' ? 'block' : 'none';
         }
 
-        // Мы используем "фейковый" email для простоты, так как Firebase Auth требует email
-        // Но для пользователя это выглядит как просто логин
-        function makeEmail(login) { return login.toLowerCase() + "@blikins.app"; }
-
         window.register = async () => {
-            const login = document.getElementById('reg-login').value;
+            const login = document.getElementById('reg-login').value.trim();
             const p1 = document.getElementById('reg-pass').value;
             const p2 = document.getElementById('reg-pass-conf').value;
             const secret = document.getElementById('reg-secret').value;
@@ -348,61 +390,54 @@
             let role = 'user';
             if(secret === '232348') role = 'user';
             else if(secret === '*?№3827428') role = 'admin';
-            else return alert("Неверный секретный пароль! Без него нельзя.");
+            else return alert("Неверный код!");
 
-            // Проверяем, свободен ли логин (упрощенно через DB)
             const snapshot = await get(child(ref(db), `usernames/${login}`));
             if(snapshot.exists()) return alert("Логин занят!");
 
-            // Создаем пользователя
-            const userId = 'user_' + Date.now(); // Генерируем ID
+            const userId = 'user_' + Date.now();
             const userData = {
-                login: login,
-                password: p1, // В реальном проекте хешировать!
-                role: role,
-                name: login, // По умолчанию имя = логин
+                login: login, password: p1, role: role, name: login,
                 avatar: "https://cdn-icons-png.flaticon.com/512/847/847969.png",
-                pepeCoins: 0,
-                bio: "Я использую BliKins",
-                isPremium: false,
-                isVerified: false,
-                groups: []
+                pepeCoins: 0, bio: "Я в BliKins", isPremium: false,
+                isVerified: false
             };
 
-            // Сохраняем в базу
             await set(ref(db, 'users/' + userId), userData);
             await set(ref(db, 'usernames/' + login), userId);
+            
+            // Auto Support Chat
+            const chatId = push(ref(db, 'chats')).key;
+            await set(ref(db, `chats/${chatId}`), {
+                type: 'private', participants: { [userId]: true, 'support_bot': true },
+                lastMessage: "Добро пожаловать в BliKins!"
+            });
+            await update(ref(db, `users/${userId}/chats/${chatId}`), { active: true });
 
-            // Создаем чат с офф ботом
-            await createSupportChat(userId);
-
-            alert("Регистрация успешна! Теперь войдите.");
+            alert("Готово! Войдите.");
             window.toggleAuth('login');
         }
 
         window.login = async () => {
-            const login = document.getElementById('login-email').value;
+            const login = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value;
 
-            // Ищем user ID по логину
             const snap = await get(child(ref(db), `usernames/${login}`));
-            if(!snap.exists()) return alert("Пользователь не найден");
+            if(!snap.exists()) return alert("Не найдено");
             const userId = snap.val();
-
             const userSnap = await get(ref(db, `users/${userId}`));
             const user = userSnap.val();
 
             if(user.password !== pass) return alert("Неверный пароль");
 
-            // Вход успешен
             currentUser = { ...user, uid: userId };
-            localStorage.setItem('blikins_user', JSON.stringify(currentUser));
+            localStorage.setItem('blikins_user_mob', JSON.stringify(currentUser));
             loadApp();
         }
 
         window.logout = () => {
-            if(confirm("Вы точно хотите выйти?")) {
-                localStorage.removeItem('blikins_user');
+            if(confirm("Выйти?")) {
+                localStorage.removeItem('blikins_user_mob');
                 location.reload();
             }
         }
@@ -412,7 +447,6 @@
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'block';
 
-            // Setup Sidebar Info
             document.getElementById('side-avatar').src = currentUser.avatar;
             document.getElementById('side-username').innerText = currentUser.name;
             document.getElementById('coin-balance').innerText = currentUser.pepeCoins;
@@ -421,83 +455,20 @@
             loadChats();
         }
 
-        // --- CHATS & MESSAGES ---
-        async function createSupportChat(userId) {
-            const chatId = push(ref(db, 'chats')).key;
-            await set(ref(db, `chats/${chatId}`), {
-                type: 'private',
-                participants: { [userId]: true, 'support_bot': true },
-                lastMessage: "Привет! Я официальный бот BliKins."
-            });
-            // Link chat to user
-            await update(ref(db, `users/${userId}/chats/${chatId}`), { active: true });
-        }
-
-        function loadChats() {
-            const chatsRef = ref(db, `users/${currentUser.uid}/chats`);
-            onValue(chatsRef, (snapshot) => {
-                const container = document.getElementById('chats-container');
-                container.innerHTML = '';
-                const chats = snapshot.val();
-                if(!chats) return;
-
-                Object.keys(chats).forEach(async (chatId) => {
-                    const chatSnap = await get(ref(db, `chats/${chatId}`));
-                    const chatData = chatSnap.val();
-                    
-                    // Определяем название и аву чата
-                    let name = "Чат", ava = "";
-                    let verified = false;
-
-                    if(chatData.type === 'private') {
-                        // Найти собеседника
-                        const otherId = Object.keys(chatData.participants).find(id => id !== currentUser.uid);
-                        if(otherId === 'support_bot') {
-                            name = "BliKins Support";
-                            ava = "https://cdn-icons-png.flaticon.com/512/4712/4712035.png";
-                            verified = true;
-                        } else {
-                            const uSnap = await get(ref(db, `users/${otherId}`));
-                            const u = uSnap.val();
-                            name = u.name;
-                            ava = u.avatar;
-                        }
-                    } else {
-                        name = chatData.name;
-                        ava = chatData.avatar || "https://cdn-icons-png.flaticon.com/512/166/166258.png";
-                    }
-
-                    const div = document.createElement('div');
-                    div.className = 'chat-item';
-                    div.innerHTML = `
-                        <img src="${ava}" class="chat-avatar">
-                        <div>
-                            <div style="font-weight:bold;">${name} ${verified ? '<i class="fas fa-check-circle official-badge"></i>' : ''}</div>
-                            <div style="font-size:12px; color:#aaa;">${chatData.lastMessage || 'Нет сообщений'}</div>
-                        </div>
-                    `;
-                    div.onclick = () => openChat(chatId, name, ava, chatData.type, chatData.owner);
-                    container.appendChild(div);
-                });
-            });
-        }
-
+        // --- VIEW SWITCHING (Mobile Magic) ---
         window.openChat = (chatId, name, ava, type, owner) => {
             currentChatId = chatId;
-            document.getElementById('active-chat-header').style.display = 'flex';
+            document.getElementById('app-screen').classList.add('show-chat');
+            
             document.getElementById('chat-header-name').innerText = name;
             document.getElementById('chat-header-avatar').src = ava;
             
             const inputArea = document.getElementById('input-area');
-            // Проверка прав для каналов
-            if(type === 'channel' && owner !== currentUser.uid) {
-                inputArea.style.display = 'none'; // Только создатель пишет
-            } else {
-                inputArea.style.display = 'flex';
-            }
+            if(type === 'channel' && owner !== currentUser.uid) inputArea.style.display = 'none';
+            else inputArea.style.display = 'flex';
 
-            // Загрузка сообщений
             const msgsRef = ref(db, `chats/${chatId}/messages`);
+            // Detach previous listener if any (simplified here)
             onValue(msgsRef, (snapshot) => {
                 const area = document.getElementById('messages-area');
                 area.innerHTML = '';
@@ -514,141 +485,164 @@
             });
         }
 
+        window.closeChat = () => {
+            document.getElementById('app-screen').classList.remove('show-chat');
+            currentChatId = null;
+        }
+
+        // --- CHATS & MESSAGES ---
+        function loadChats() {
+            const chatsRef = ref(db, `users/${currentUser.uid}/chats`);
+            onValue(chatsRef, (snapshot) => {
+                const container = document.getElementById('chats-container');
+                container.innerHTML = '';
+                const chats = snapshot.val();
+                if(!chats) return;
+
+                Object.keys(chats).forEach(async (chatId) => {
+                    const chatSnap = await get(ref(db, `chats/${chatId}`));
+                    const chatData = chatSnap.val();
+                    if(!chatData) return;
+
+                    let name = "Чат", ava = "";
+                    let isVerified = false;
+
+                    if(chatData.type === 'private') {
+                        const otherId = Object.keys(chatData.participants).find(id => id !== currentUser.uid);
+                        if(otherId === 'support_bot') {
+                            name = "BliKins Support";
+                            ava = "https://cdn-icons-png.flaticon.com/512/4712/4712035.png";
+                            isVerified = true;
+                        } else {
+                            const uSnap = await get(ref(db, `users/${otherId}`));
+                            if(uSnap.exists()) {
+                                const u = uSnap.val();
+                                name = u.name;
+                                ava = u.avatar;
+                                isVerified = u.isVerified;
+                            }
+                        }
+                    } else {
+                        name = chatData.name;
+                        ava = chatData.avatar || "https://cdn-icons-png.flaticon.com/512/166/166258.png";
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'chat-item';
+                    div.innerHTML = `
+                        <img src="${ava}" class="chat-avatar">
+                        <div class="chat-info">
+                            <div class="chat-name">${name} ${isVerified ? '<i class="fas fa-check-circle" style="color:#00b894; margin-left:5px;"></i>' : ''}</div>
+                            <div class="chat-last-msg">${chatData.lastMessage || 'Нет сообщений'}</div>
+                        </div>
+                    `;
+                    div.onclick = () => openChat(chatId, name, ava, chatData.type, chatData.owner);
+                    container.appendChild(div);
+                });
+            });
+        }
+
         window.sendMessage = async () => {
             const input = document.getElementById('message-input');
-            const text = input.value;
+            const text = input.value.trim();
             if(!text || !currentChatId) return;
 
             await push(ref(db, `chats/${currentChatId}/messages`), {
-                text: text,
-                senderId: currentUser.uid,
-                timestamp: Date.now()
+                text: text, senderId: currentUser.uid, timestamp: Date.now()
             });
             await update(ref(db, `chats/${currentChatId}`), { lastMessage: text });
             input.value = '';
         }
 
-        // --- SEARCH ---
+        // --- SEARCH & UI ---
         window.searchUsers = async (val) => {
-            if(val.length < 3) return; // Экономим запросы
+            if(val.length < 3) return;
             const container = document.getElementById('chats-container');
-            container.innerHTML = '<div style="padding:10px;">Поиск...</div>';
+            container.innerHTML = '<div style="padding:20px; text-align:center">Поиск...</div>';
 
-            // Ищем среди логинов
             const snap = await get(child(ref(db), `usernames/${val}`));
             if(snap.exists()) {
                 const uid = snap.val();
                 if(uid === currentUser.uid) return;
-                
-                const userSnap = await get(ref(db, `users/${uid}`));
-                const user = userSnap.val();
+                const uSnap = await get(ref(db, `users/${uid}`));
+                const user = uSnap.val();
                 
                 container.innerHTML = `
                     <div class="chat-item" onclick="startPrivateChat('${uid}')">
                         <img src="${user.avatar}" class="chat-avatar">
-                        <div>${user.name} (@${user.login})</div>
+                        <div class="chat-info">
+                            <div class="chat-name">${user.name}</div>
+                            <div class="chat-last-msg">@${user.login}</div>
+                        </div>
                     </div>
                 `;
             } else {
-                container.innerHTML = '<div style="padding:10px;">Ничего не найдено</div>';
+                container.innerHTML = '<div style="padding:20px; text-align:center">Ничего не найдено</div>';
             }
         }
 
         window.startPrivateChat = async (targetId) => {
-            // Простая реализация: создаем новый чат. 
-            // В идеале надо проверить, есть ли уже чат с этим юзером.
             const newChatId = push(ref(db, 'chats')).key;
             await set(ref(db, `chats/${newChatId}`), {
-                type: 'private',
-                participants: { [currentUser.uid]: true, [targetId]: true },
+                type: 'private', participants: { [currentUser.uid]: true, [targetId]: true },
                 lastMessage: "Чат создан"
             });
             await update(ref(db, `users/${currentUser.uid}/chats/${newChatId}`), { active: true });
             await update(ref(db, `users/${targetId}/chats/${newChatId}`), { active: true });
-            loadChats(); // Перезагрузить список
+            loadChats();
         }
 
-        // --- ADMIN PANEL ---
-        window.openAdminPanel = async () => {
-            document.getElementById('admin-modal').style.display = 'flex';
-            // Загрузка всех юзеров (Осторожно, если их много!)
-            const snap = await get(ref(db, 'users'));
-            const users = snap.val();
-            const list = document.getElementById('admin-users-list');
-            list.innerHTML = '';
-            document.getElementById('total-users').innerText = Object.keys(users).length;
-
-            Object.entries(users).forEach(([uid, u]) => {
-                const row = document.createElement('div');
-                row.className = 'admin-user-row';
-                row.innerHTML = `
-                    <div>
-                        <strong>${u.login}</strong> (${u.pepeCoins} Pepe)
-                        ${u.isVerified ? '✅' : ''} ${u.isPremium ? '🌟' : ''}
-                    </div>
-                    <div class="admin-actions">
-                        <button class="icon-btn" onclick="admAction('${uid}', 'msg')">✉️</button>
-                        <button class="icon-btn" onclick="admAction('${uid}', 'mute')">🔇</button>
-                        <button class="icon-btn" onclick="admAction('${uid}', 'prem')">🌟</button>
-                    </div>
-                `;
-                list.appendChild(row);
-            });
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('open');
         }
-
-        window.admAction = async (uid, action) => {
-            if(action === 'prem') {
-                await update(ref(db, `users/${uid}`), { isPremium: true });
-                alert("Премиум выдан!");
-            }
-            if(action === 'mute') {
-                // Логика мута сложная, просто пометим в базе
-                await update(ref(db, `users/${uid}`), { isMuted: true });
-                alert("Мут выдан!");
-            }
-            if(action === 'msg') {
-                // Открыть чат от имени бота (симуляция)
-                alert("Открываю чат с пользователем...");
-                // Тут нужно логику открытия чата
-            }
-            openAdminPanel(); // Refresh
-        }
-
-        // --- UI UTILS ---
-        window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('open');
         window.openCreateMenu = () => document.getElementById('create-modal').style.display = 'flex';
         window.closeModal = (id) => document.getElementById(id).style.display = 'none';
         
+        // ADMIN PANEL
+        window.openAdminPanel = async () => {
+            document.getElementById('admin-modal').style.display = 'flex';
+            const snap = await get(ref(db, 'users'));
+            const list = document.getElementById('admin-users-list');
+            list.innerHTML = '';
+            Object.entries(snap.val() || {}).forEach(([uid, u]) => {
+                list.innerHTML += `
+                    <div style="background:#181825; padding:10px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b>${u.login}</b><br>
+                            <small>${u.pepeCoins} Coins</small>
+                        </div>
+                        <div>
+                           <button onclick="admAction('${uid}', 'prem')">🌟</button>
+                           <button onclick="admAction('${uid}', 'mute')">🔇</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        window.admAction = async (uid, act) => {
+            if(act === 'prem') { await update(ref(db, `users/${uid}`), { isPremium: true }); alert("Выдан премиум"); }
+            if(act === 'mute') { await update(ref(db, `users/${uid}`), { isMuted: true }); alert("Выдан мут"); }
+        }
+
+        // Profile logic
         window.openProfile = () => {
             document.getElementById('profile-modal').style.display = 'flex';
-            document.getElementById('edit-login').innerText = currentUser.login;
             document.getElementById('edit-name').value = currentUser.name;
             document.getElementById('edit-bio').value = currentUser.bio;
             document.getElementById('edit-avatar').value = currentUser.avatar;
         }
-
         window.saveProfile = async () => {
-            const newName = document.getElementById('edit-name').value;
-            const newBio = document.getElementById('edit-bio').value;
-            const newAva = document.getElementById('edit-avatar').value;
-
-            await update(ref(db, `users/${currentUser.uid}`), {
-                name: newName, bio: newBio, avatar: newAva
-            });
-            currentUser.name = newName; currentUser.bio = newBio; currentUser.avatar = newAva;
-            closeModal('profile-modal');
-            loadApp(); // Refresh UI
+             const up = { name: document.getElementById('edit-name').value, bio: document.getElementById('edit-bio').value, avatar: document.getElementById('edit-avatar').value };
+             await update(ref(db, `users/${currentUser.uid}`), up);
+             Object.assign(currentUser, up);
+             closeModal('profile-modal');
+             loadApp();
         }
-        
-        // Settings placeholder
-        window.openSettings = () => alert("Настройки: Язык (Eng/Rus/Ukr/Spa/Ger) - Тема. (В разработке)");
+        window.openSettings = () => alert("Настройки в разработке");
 
-        // Check if already logged in
-        const stored = localStorage.getItem('blikins_user');
-        if(stored) {
-            currentUser = JSON.parse(stored);
-            loadApp();
-        }
+        const stored = localStorage.getItem('blikins_user_mob');
+        if(stored) { currentUser = JSON.parse(stored); loadApp(); }
     </script>
 </body>
 </html>
